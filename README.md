@@ -109,7 +109,7 @@ This corresponds to [Content.tsx#L33](packages/client/src/index.tsx).
 
 ## Plugins
 
-The client supports loading plugins at runtime. Drop a `.js` file into `packages/client/public/plugins/` and it will be picked up automatically (the manifest is generated at build time by Vite).
+This forked client supports loading plugins at runtime. Drop a `.js` file into `packages/client/public/plugins/` and it will be picked up automatically (the manifest is generated at build time by Vite).
 
 Plugins are standard ES modules that export a default object with a `name` and a `setup` function:
 
