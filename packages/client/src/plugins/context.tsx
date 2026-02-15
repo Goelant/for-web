@@ -1,4 +1,4 @@
-import { Match, Switch, createContext, useContext, type JSX, type JSXElement } from "solid-js";
+import { Show, createContext, useContext, type JSX, type JSXElement } from "solid-js";
 import { createStore } from "solid-js/store";
 
 import { useParams } from "@revolt/routing";
@@ -16,6 +16,8 @@ export interface PluginState {
   sidebarActions: SidebarAction[];
   contentPages: ContentPage[];
   loaded: string[];
+  /** True once loadPlugins() has finished (all plugins loaded or failed). */
+  ready: boolean;
 }
 
 const PluginContext = createContext<PluginState>();
@@ -37,6 +39,7 @@ export function PluginProvider(props: { children: JSXElement }) {
     sidebarActions: [],
     contentPages: [],
     loaded: [],
+    ready: false,
   });
 
   // Expose on window so the loader can register without needing the context
@@ -55,19 +58,29 @@ export function PluginProvider(props: { children: JSXElement }) {
 /**
  * Wraps children with all registered interface wrappers.
  * First registered = outermost.
+ *
+ * The wrapping logic lives inside JSX (via a thunk) so that SolidJS
+ * tracks `plugins.interfaceWrappers` reactively — wrappers registered
+ * after the initial render (e.g. from async plugin loading) are picked up.
  */
 export function PluginInterfaceWrappers(props: { children: JSX.Element }) {
   const plugins = usePlugins();
-  if (!plugins || plugins.interfaceWrappers.length === 0) return props.children;
 
-  // Fold: first registered = outermost
-  let result = () => props.children;
-  for (let i = plugins.interfaceWrappers.length - 1; i >= 0; i--) {
-    const Wrapper = plugins.interfaceWrappers[i];
-    const inner = result;
-    result = () => <Wrapper>{inner()}</Wrapper>;
-  }
-  return result();
+  const wrapped = () => {
+    const wrappers = plugins?.interfaceWrappers;
+    if (!wrappers || wrappers.length === 0) return props.children;
+
+    // Fold: first registered = outermost
+    let result = () => props.children;
+    for (let i = wrappers.length - 1; i >= 0; i--) {
+      const Wrapper = wrappers[i];
+      const inner = result;
+      result = () => <Wrapper>{inner()}</Wrapper>;
+    }
+    return result();
+  };
+
+  return <>{wrapped()}</>;
 }
 
 /**
@@ -81,13 +94,14 @@ export function PluginContentPage() {
   const page = () => plugins?.contentPages.find((p) => p.id === params.pageId);
 
   return (
-    <Switch fallback={<Navigate href="/" />}>
-      <Match when={page()}>
-        {(p) => {
-          const Page = p().component;
-          return <Page />;
-        }}
-      </Match>
-    </Switch>
+    <Show
+      when={page()}
+      fallback={plugins?.ready ? <Navigate href="/" /> : null}
+    >
+      {(p) => {
+        const Page = p().component;
+        return <Page />;
+      }}
+    </Show>
   );
 }

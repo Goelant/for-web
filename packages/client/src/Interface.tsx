@@ -73,40 +73,40 @@ const Interface = (props: { children: JSX.Element }) => {
             <Navigate href="/login" />
           </Match>
           <Match when={lifecycle.loadedOnce()}>
-            <PluginInterfaceWrappers>
-              <Layout
-                disconnected={isDisconnected()}
-                style={{ "flex-grow": 1, "min-height": 0 }}
-                onDragOver={(e) => {
-                  if (e.dataTransfer) e.dataTransfer.dropEffect = "none";
-                }}
-                onDrop={(e) => e.preventDefault()}
+            <Layout
+              disconnected={isDisconnected()}
+              style={{ "flex-grow": 1, "min-height": 0 }}
+              onDragOver={(e) => {
+                if (e.dataTransfer) e.dataTransfer.dropEffect = "none";
+              }}
+              onDrop={(e) => e.preventDefault()}
+            >
+              <Sidebar
+                menuGenerator={(target) => ({
+                  contextMenu: () => {
+                    return (
+                      <>
+                        {target instanceof Server ? (
+                          <ServerContextMenu server={target} />
+                        ) : (
+                          <ChannelContextMenu channel={target} />
+                        )}
+                      </>
+                    );
+                  },
+                })}
+              />
+              <Content
+                sidebar={state.layout.getSectionState(
+                  LAYOUT_SECTIONS.PRIMARY_SIDEBAR,
+                  true,
+                )}
               >
-                <Sidebar
-                  menuGenerator={(target) => ({
-                    contextMenu: () => {
-                      return (
-                        <>
-                          {target instanceof Server ? (
-                            <ServerContextMenu server={target} />
-                          ) : (
-                            <ChannelContextMenu channel={target} />
-                          )}
-                        </>
-                      );
-                    },
-                  })}
-                />
-                <Content
-                  sidebar={state.layout.getSectionState(
-                    LAYOUT_SECTIONS.PRIMARY_SIDEBAR,
-                    true,
-                  )}
-                >
+                <PluginInterfaceWrappers>
                   {props.children}
-                </Content>
-              </Layout>
-            </PluginInterfaceWrappers>
+                </PluginInterfaceWrappers>
+              </Content>
+            </Layout>
           </Match>
         </Switch>
 
