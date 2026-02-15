@@ -2,10 +2,7 @@
  * Minimal type definitions for the plugin API.
  * These mirror the types from the base app's plugin system.
  */
-import type { Client, Server } from "stoat.js";
-
-export type ClientResolver = (entityId: string) => Client | undefined;
-export type ServerProvider = () => Server[];
+import type { Client } from "stoat.js";
 
 export interface SidebarAction {
   icon: () => unknown;
@@ -20,8 +17,7 @@ export interface PluginStorage {
 }
 
 export interface PluginAPI {
-  registerClientResolver(fn: ClientResolver): void;
-  registerServerProvider(fn: ServerProvider): void;
+  registerInterfaceWrapper(wrapper: (props: { children: unknown }) => unknown): void;
   registerSidebarAction(action: SidebarAction): void;
   storage: PluginStorage;
   getClient(): Client;

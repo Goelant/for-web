@@ -297,6 +297,7 @@ export const ServerList = (props: Props) => {
             </Tooltip>
           )}
         </Draggable>
+        <For each={plugins?.sidebarEntries}>{(Entry) => <Entry />}</For>
         <Tooltip placement="right" content={"Create or join a server"}>
           <a
             class={entryContainer()}
@@ -364,7 +365,7 @@ const listBase = cva({
 /**
  * Server entries
  */
-const entryContainer = cva({
+export const entryContainer = cva({
   base: {
     width: "56px",
     height: "56px",

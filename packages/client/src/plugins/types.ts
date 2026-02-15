@@ -1,16 +1,11 @@
-import type { JSX } from "solid-js";
-import type { Client, Server } from "stoat.js";
+import type { Component, JSX } from "solid-js";
+import type { Client } from "stoat.js";
 
 /**
- * A client resolver: given an entity ID (server or channel),
- * return the Client that owns it, or undefined.
+ * A component that wraps the Interface content (sidebar + route content).
+ * Multiple wrappers nest (first registered = outermost).
  */
-export type ClientResolver = (entityId: string) => Client | undefined;
-
-/**
- * A server provider: return additional servers to show in the sidebar.
- */
-export type ServerProvider = () => Server[];
+export type InterfaceWrapper = Component<{ children: JSX.Element }>;
 
 /**
  * A sidebar action button injected by a plugin.
@@ -34,11 +29,8 @@ export interface PluginStorage {
  * The API object passed to plugin.setup().
  */
 export interface PluginAPI {
-  /** Register a function that resolves entity IDs to Clients */
-  registerClientResolver(fn: ClientResolver): void;
-
-  /** Register a function that provides additional servers for the sidebar */
-  registerServerProvider(fn: ServerProvider): void;
+  /** Register a component that wraps the Interface content */
+  registerInterfaceWrapper(wrapper: InterfaceWrapper): void;
 
   /** Register a sidebar action button */
   registerSidebarAction(action: SidebarAction): void;

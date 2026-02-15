@@ -1,6 +1,5 @@
 export type {
-  ClientResolver,
-  ServerProvider,
+  InterfaceWrapper,
   SidebarAction,
   PluginAPI,
   PluginStorage,
@@ -10,8 +9,7 @@ export type {
 export {
   PluginProvider,
   usePlugins,
-  resolveClientFromPlugins,
-  getAllPluginServers,
+  PluginInterfaceWrappers,
   type PluginState,
 } from "./context";
 

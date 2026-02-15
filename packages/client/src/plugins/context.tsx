@@ -1,17 +1,14 @@
-import { createContext, useContext, type JSXElement } from "solid-js";
+import { createContext, useContext, type JSX, type JSXElement } from "solid-js";
 import { createStore } from "solid-js/store";
 
-import type { Client, Server } from "stoat.js";
-
 import type {
-  ClientResolver,
-  ServerProvider,
+  InterfaceWrapper,
   SidebarAction,
 } from "./types";
 
 export interface PluginState {
-  clientResolvers: ClientResolver[];
-  serverProviders: ServerProvider[];
+  interfaceWrappers: InterfaceWrapper[];
+  sidebarEntries: (() => JSX.Element)[];
   sidebarActions: SidebarAction[];
   loaded: string[];
 }
@@ -30,8 +27,8 @@ export function usePlugins(): PluginState | undefined {
  */
 export function PluginProvider(props: { children: JSXElement }) {
   const [state, setState] = createStore<PluginState>({
-    clientResolvers: [],
-    serverProviders: [],
+    interfaceWrappers: [],
+    sidebarEntries: [],
     sidebarActions: [],
     loaded: [],
   });
@@ -50,31 +47,19 @@ export function PluginProvider(props: { children: JSXElement }) {
 }
 
 /**
- * Resolve an entity ID (server or channel) to a Client
- * using all registered plugin resolvers.
+ * Wraps children with all registered interface wrappers.
+ * First registered = outermost.
  */
-export function resolveClientFromPlugins(
-  state: PluginState | undefined,
-  entityId: string,
-): Client | undefined {
-  if (!state) return undefined;
-  for (const resolver of state.clientResolvers) {
-    const client = resolver(entityId);
-    if (client) return client;
-  }
-  return undefined;
-}
+export function PluginInterfaceWrappers(props: { children: JSX.Element }) {
+  const plugins = usePlugins();
+  if (!plugins || plugins.interfaceWrappers.length === 0) return props.children;
 
-/**
- * Get all extra servers from all plugins.
- */
-export function getAllPluginServers(
-  state: PluginState | undefined,
-): Server[] {
-  if (!state) return [];
-  const servers: Server[] = [];
-  for (const provider of state.serverProviders) {
-    servers.push(...provider());
+  // Fold: first registered = outermost
+  let result = () => props.children;
+  for (let i = plugins.interfaceWrappers.length - 1; i >= 0; i--) {
+    const Wrapper = plugins.interfaceWrappers[i];
+    const inner = result;
+    result = () => <Wrapper>{inner()}</Wrapper>;
   }
-  return servers;
+  return result();
 }

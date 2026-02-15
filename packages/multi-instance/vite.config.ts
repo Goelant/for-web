@@ -70,6 +70,12 @@ function getKnownExports(moduleName: string): string[] {
       ];
     case "stoat-api":
       return ["API"];
+    case "@revolt/routing":
+      return ["useSmartParams", "useParams", "useNavigate", "useLocation"];
+    case "@revolt/client":
+      return ["useClient", "clientContext"];
+    case "@revolt/app/sidebar":
+      return ["entryContainer"];
     default:
       return [];
   }
@@ -82,6 +88,9 @@ export default defineConfig({
       "solid-js/store",
       "solid-js/web",
       "stoat.js",
+      "@revolt/routing",
+      "@revolt/client",
+      "@revolt/app/sidebar",
     ]),
     solidPlugin(),
   ],

@@ -45,11 +45,8 @@ function createPluginAPI(
   ).__STOAT_PLUGIN_STATE__;
 
   return {
-    registerClientResolver(fn) {
-      setState("clientResolvers", (prev: unknown[]) => [...prev, fn]);
-    },
-    registerServerProvider(fn) {
-      setState("serverProviders", (prev: unknown[]) => [...prev, fn]);
+    registerInterfaceWrapper(wrapper) {
+      setState("interfaceWrappers", (prev: unknown[]) => [...prev, wrapper]);
     },
     registerSidebarAction(action) {
       setState("sidebarActions", (prev: unknown[]) => [...prev, action]);
