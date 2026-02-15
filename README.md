@@ -106,3 +106,34 @@ The app currently needs the following routes:
 - `/channel`
 
 This corresponds to [Content.tsx#L33](packages/client/src/index.tsx).
+
+## Plugins
+
+The client supports loading plugins at runtime. Drop a `.js` file into `packages/client/public/plugins/` and it will be picked up automatically (the manifest is generated at build time by Vite).
+
+Plugins are standard ES modules that export a default object with a `name` and a `setup` function:
+
+```js
+export default {
+  name: "my-plugin",
+  setup(api) {
+    // api.registerClientResolver(fn)  — resolve a Client for a given entity ID
+    // api.registerServerProvider(fn)   — provide extra servers to show in the sidebar
+    // api.registerSidebarAction(action) — add a button to the server list
+    // api.storage                      — namespaced localStorage wrapper
+    // api.getClient()                  — get the primary Client instance
+  },
+};
+```
+
+Shared dependencies (Solid.js, stoat.js, UI components, etc.) are exposed on `window.__STOAT__` so plugins don't need to bundle them. See `packages/multi-instance/` for a full example — it adds multi-instance support as a standalone plugin built with Vite's library mode.
+
+### Building a plugin
+
+```bash
+# build the multi-instance plugin as an example
+pnpm --filter multi-instance exec vite build
+
+# copy the output to the plugins folder
+cp packages/multi-instance/dist/multi-instance.js packages/client/public/plugins/
+```

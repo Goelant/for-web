@@ -13,6 +13,8 @@ import { useLocation, useParams, useSmartParams } from "@revolt/routing";
 import { useState } from "@revolt/state";
 import { LAYOUT_SECTIONS } from "@revolt/state/stores/Layout";
 
+import { usePlugins, getAllPluginServers, resolveClientFromPlugins } from "../plugins/context";
+
 import { HomeSidebar, ServerList, ServerSidebar } from "./navigation";
 
 /**
@@ -28,6 +30,25 @@ export const Sidebar = (props: {
   const state = useState();
   const client = useClient();
   const { openModal } = useModals();
+  const plugins = usePlugins();
+
+  /**
+   * Get ordered servers, including any extra servers from plugins.
+   */
+  const orderedServers = () => {
+    const primaryServers = state.ordering.orderedServers(client());
+
+    const extraServers = getAllPluginServers(plugins);
+    if (extraServers.length > 0) {
+      const primaryIds = new Set(primaryServers.map((s) => s.id));
+      const additional = extraServers.filter((s) => !primaryIds.has(s.id));
+      if (additional.length > 0) {
+        return [...primaryServers, ...additional];
+      }
+    }
+
+    return primaryServers;
+  };
 
   const params = useParams<{ server: string }>();
   const location = useLocation();
@@ -35,7 +56,7 @@ export const Sidebar = (props: {
   return (
     <div style={{ display: "flex", "flex-shrink": 0 }}>
       <ServerList
-        orderedServers={state.ordering.orderedServers(client())}
+        orderedServers={orderedServers()}
         setServerOrder={state.ordering.setServerOrder}
         unreadConversations={state.ordering
           .orderedConversations(client())
@@ -116,12 +137,29 @@ const Server: Component = () => {
   const { openModal } = useModals();
   const params = useSmartParams();
   const client = useClient();
+  const plugins = usePlugins();
 
   /**
-   * Resolve the server
-   * @returns Server
+   * Resolve the correct client for this server.
+   * The primary client is tried first; if the server isn't found,
+   * we ask plugin client resolvers (e.g. multi-instance).
    */
-  const server = () => client()!.servers.get(params().serverId!)!;
+  const resolvedClient = () => {
+    const serverId = params().serverId;
+    if (!serverId) return client()!;
+    // If primary client owns this server, use it
+    if (client()?.servers.has(serverId)) return client()!;
+    // Otherwise ask plugins
+    const pluginClient = resolveClientFromPlugins(plugins, serverId);
+    if (pluginClient) return pluginClient;
+    return client()!;
+  };
+
+  const server = () => {
+    const serverId = params().serverId;
+    if (!serverId) return undefined!;
+    return resolvedClient().servers.get(serverId)!;
+  };
 
   /**
    * Open the server information modal

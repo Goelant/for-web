@@ -3,7 +3,7 @@
  */
 import "./sentry";
 
-import { JSX, onMount } from "solid-js";
+import { JSX, onMount, useContext } from "solid-js";
 import { render } from "solid-js/web";
 
 import { attachDevtoolsOverlay } from "@solid-devtools/overlay";
@@ -11,6 +11,7 @@ import { Navigate, Route, Router, useParams } from "@solidjs/router";
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import "material-symbols";
 import "mdui/mdui.css";
+import * as StoatJS from "stoat.js";
 import { PublicBot, PublicChannelInvite } from "stoat.js";
 
 import FlowCheck from "@revolt/auth/src/flows/FlowCheck";
@@ -22,13 +23,22 @@ import FlowLogin from "@revolt/auth/src/flows/FlowLogin";
 import FlowResend from "@revolt/auth/src/flows/FlowResend";
 import FlowReset from "@revolt/auth/src/flows/FlowReset";
 import FlowVerify from "@revolt/auth/src/flows/FlowVerify";
-import { ClientContext, useClient } from "@revolt/client";
+import { ClientContext, clientContext, useClient } from "@revolt/client";
 import { I18nProvider } from "@revolt/i18n";
 import { KeybindContext } from "@revolt/keybinds";
 import { ModalContext, ModalRenderer, useModals } from "@revolt/modal";
 import { VoiceContext } from "@revolt/rtc";
 import { StateContext, SyncWorker, useState } from "@revolt/state";
-import { FloatingManager, LoadTheme } from "@revolt/ui";
+import * as RevoltUI from "@revolt/ui";
+
+import {
+  PluginProvider,
+  usePlugins,
+  resolveClientFromPlugins,
+  loadPlugins,
+  exposeSharedDependencies,
+  exposeAppModules,
+} from "./plugins";
 
 /* @refresh reload */
 import "@revolt/ui/styles";
@@ -108,6 +118,67 @@ function BotRedirect() {
   return <PWARedirect />;
 }
 
+/**
+ * Generic bridge that overrides the client context when plugins
+ * claim ownership of the current server or channel.
+ * All child components (messages, composition, etc.) automatically
+ * use the correct client via useClient().
+ */
+function PluginClientBridge(props: { children?: JSX.Element }) {
+  const params = useParams<{ server?: string; channel?: string }>();
+  const primaryController = useContext(clientContext);
+  const plugins = usePlugins();
+
+  const resolvedController = () => {
+    const entityId = params.server || params.channel;
+    if (entityId && plugins) {
+      const resolvedClient = resolveClientFromPlugins(plugins, entityId);
+      if (resolvedClient) {
+        return new Proxy(primaryController, {
+          get(target, prop) {
+            if (prop === "getCurrentClient") {
+              return () => resolvedClient;
+            }
+            return (target as never)[prop as never];
+          },
+        });
+      }
+    }
+    return primaryController;
+  };
+
+  return (
+    <clientContext.Provider
+      value={resolvedController() as typeof primaryController}
+    >
+      {props.children}
+    </clientContext.Provider>
+  );
+}
+
+/**
+ * Component that loads plugins after the app is mounted.
+ */
+function PluginLoader() {
+  const client = useClient();
+
+  onMount(() => {
+    // Expose shared deps for plugins
+    exposeSharedDependencies();
+    exposeAppModules({
+      "@revolt/ui": RevoltUI,
+      "@revolt/client": { useClient, clientContext },
+      "@revolt/modal": { useModals },
+      "stoat.js": StoatJS,
+    });
+
+    // Load plugins from plugins/ directory
+    loadPlugins(() => client());
+  });
+
+  return null;
+}
+
 function MountContext(props: { children?: JSX.Element }) {
   const state = useState();
 
@@ -119,18 +190,21 @@ function MountContext(props: { children?: JSX.Element }) {
   return (
     <KeybindContext>
       <ModalContext>
-        <ClientContext state={state}>
-          <I18nProvider>
-            <VoiceContext>
-              <QueryClientProvider client={client}>
-                {props.children}
-                <ModalRenderer />
-                <FloatingManager />
-              </QueryClientProvider>
-            </VoiceContext>
-          </I18nProvider>
-          <SyncWorker />
-        </ClientContext>
+        <PluginProvider>
+          <ClientContext state={state}>
+            <I18nProvider>
+              <VoiceContext>
+                <QueryClientProvider client={client}>
+                  <PluginLoader />
+                  {props.children}
+                  <ModalRenderer />
+                  <RevoltUI.FloatingManager />
+                </QueryClientProvider>
+              </VoiceContext>
+            </I18nProvider>
+            <SyncWorker />
+          </ClientContext>
+        </PluginProvider>
       </ModalContext>
     </KeybindContext>
   );
@@ -159,16 +233,21 @@ render(
           <Route path="/invite/:code" component={InviteRedirect} />
           <Route path="/bot/:code" component={BotRedirect} />
           <Route path="/friends" component={Friends} />
-          <Route path="/server/:server/*">
+          <Route path="/server/:server/*" component={PluginClientBridge}>
             <Route path="/channel/:channel/*" component={ChannelPage} />
             <Route path="/*" component={ServerHome} />
           </Route>
-          <Route path="/channel/:channel/*" component={ChannelPage} />
+          <Route
+            path="/channel/:channel/*"
+            component={PluginClientBridge}
+          >
+            <Route path="/*" component={ChannelPage} />
+          </Route>
           <Route path="/*" component={HomePage} />
         </Route>
       </Router>
 
-      <LoadTheme />
+      <RevoltUI.LoadTheme />
       {/* <ReportBug /> */}
     </StateContext>
   ),

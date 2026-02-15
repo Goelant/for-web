@@ -23,6 +23,12 @@ export type { default as ClientController } from "./Controller";
 const clientContext = createContext(null! as ClientController);
 
 /**
+ * Exported for multi-instance override: allows wrapping subtrees with
+ * a different Client while keeping the same context key.
+ */
+export { clientContext };
+
+/**
  * Mount the modal controller
  */
 export function ClientContext(props: { state: State; children: JSXElement }) {
