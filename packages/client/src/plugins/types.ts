@@ -36,6 +36,12 @@ export interface ContentPage {
 }
 
 /**
+ * A function that returns optional JSX to decorate a channel header.
+ * Called with the channel ID; return null if the decorator doesn't apply.
+ */
+export type ChannelDecorator = (channelId: string) => JSX.Element | null;
+
+/**
  * The API object passed to plugin.setup().
  */
 export interface PluginAPI {
@@ -47,6 +53,9 @@ export interface PluginAPI {
 
   /** Register a plugin-owned page at /ext/:pageId */
   registerContentPage(page: ContentPage): void;
+
+  /** Register a decorator shown in channel headers (e.g. instance tag for DMs) */
+  registerChannelDecorator(decorator: ChannelDecorator): void;
 
   /** Per-plugin persistent storage */
   storage: PluginStorage;

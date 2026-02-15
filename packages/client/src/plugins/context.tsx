@@ -5,6 +5,7 @@ import { useParams } from "@revolt/routing";
 import { Navigate } from "@revolt/routing";
 
 import type {
+  ChannelDecorator,
   ContentPage,
   InterfaceWrapper,
   SidebarAction,
@@ -15,6 +16,7 @@ export interface PluginState {
   sidebarEntries: (() => JSX.Element)[];
   sidebarActions: SidebarAction[];
   contentPages: ContentPage[];
+  channelDecorators: ChannelDecorator[];
   loaded: string[];
   /** True once loadPlugins() has finished (all plugins loaded or failed). */
   ready: boolean;
@@ -38,6 +40,7 @@ export function PluginProvider(props: { children: JSXElement }) {
     sidebarEntries: [],
     sidebarActions: [],
     contentPages: [],
+    channelDecorators: [],
     loaded: [],
     ready: false,
   });

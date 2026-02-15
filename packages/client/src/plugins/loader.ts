@@ -54,6 +54,9 @@ function createPluginAPI(
     registerContentPage(page) {
       setState("contentPages", (prev: unknown[]) => [...prev, page]);
     },
+    registerChannelDecorator(decorator) {
+      setState("channelDecorators", (prev: unknown[]) => [...prev, decorator]);
+    },
     storage: createPluginStorage(pluginName),
     getClient,
   };

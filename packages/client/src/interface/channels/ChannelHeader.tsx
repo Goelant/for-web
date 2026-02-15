@@ -1,4 +1,4 @@
-import { Accessor, Match, Setter, Show, Switch } from "solid-js";
+import { Accessor, For, Match, Setter, Show, Switch } from "solid-js";
 
 import { Trans, useLingui } from "@lingui-solid/solid/macro";
 import { Channel } from "stoat.js";
@@ -28,6 +28,7 @@ import MdSettings from "@material-design-icons/svg/outlined/settings.svg?compone
 import MdKeep from "../../svg/keep.svg?component-solid";
 import { HeaderIcon } from "../common/CommonHeader";
 
+import { usePlugins } from "../../plugins";
 import { SidebarState } from "./text/TextChannel";
 
 interface Props {
@@ -55,6 +56,7 @@ export function ChannelHeader(props: Props) {
   const client = useClient();
   const { t } = useLingui();
   const state = useState();
+  const plugins = usePlugins();
 
   const searchValue = () => {
     if (!props.sidebarState) return null;
@@ -123,6 +125,9 @@ export function ChannelHeader(props: Props) {
           </HeaderIcon>
           <TextWithEmoji content={props.channel.recipient?.username} />
           <UserStatus status={props.channel.recipient?.presence} size="8px" />
+          <For each={plugins?.channelDecorators}>
+            {(decorator) => decorator(props.channel.id)}
+          </For>
         </Match>
         <Match when={props.channel.type === "SavedMessages"}>
           <HeaderIcon>

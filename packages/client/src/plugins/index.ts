@@ -1,4 +1,5 @@
 export type {
+  ChannelDecorator,
   ContentPage,
   InterfaceWrapper,
   SidebarAction,
