@@ -110,6 +110,8 @@ This corresponds to [Content.tsx#L33](packages/client/src/index.tsx).
 ## Plugin System
 
 This forked client supports loading plugins at runtime. Drop a `.js` file into `packages/client/public/plugins/` and it will be picked up automatically (the manifest is generated at build time by Vite).
+> For a detailed inventory of every file modified and the exact implementation surface, see [PLUGIN_ARCHITECTURE.md](./PLUGIN_ARCHITECTURE.md).
+
 The client ships with a runtime plugin system that lets you extend the UI and behaviour without touching the core codebase. Plugins are plain ES modules loaded at startup from the `packages/client/public/plugins/` directory.
 
 > **Security:** Plugins run in the main browser context with full access to the DOM, `localStorage`, and the authenticated `Client` instance. **Only load plugins you trust.** There is no sandboxing.
