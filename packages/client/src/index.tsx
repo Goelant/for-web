@@ -34,6 +34,7 @@ import * as RevoltUI from "@revolt/ui";
 
 import {
   PluginProvider,
+  PluginContentPage,
   loadPlugins,
   exposeSharedDependencies,
   exposeAppModules,
@@ -197,6 +198,7 @@ render(
           <Route path="/invite/:code" component={InviteRedirect} />
           <Route path="/bot/:code" component={BotRedirect} />
           <Route path="/friends" component={Friends} />
+          <Route path="/ext/:pageId/*" component={PluginContentPage} />
           <Route path="/server/:server/*">
             <Route path="/channel/:channel/*" component={ChannelPage} />
             <Route path="/*" component={ServerHome} />

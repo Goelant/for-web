@@ -1,7 +1,11 @@
-import { createContext, useContext, type JSX, type JSXElement } from "solid-js";
+import { Match, Switch, createContext, useContext, type JSX, type JSXElement } from "solid-js";
 import { createStore } from "solid-js/store";
 
+import { useParams } from "@revolt/routing";
+import { Navigate } from "@revolt/routing";
+
 import type {
+  ContentPage,
   InterfaceWrapper,
   SidebarAction,
 } from "./types";
@@ -10,6 +14,7 @@ export interface PluginState {
   interfaceWrappers: InterfaceWrapper[];
   sidebarEntries: (() => JSX.Element)[];
   sidebarActions: SidebarAction[];
+  contentPages: ContentPage[];
   loaded: string[];
 }
 
@@ -30,6 +35,7 @@ export function PluginProvider(props: { children: JSXElement }) {
     interfaceWrappers: [],
     sidebarEntries: [],
     sidebarActions: [],
+    contentPages: [],
     loaded: [],
   });
 
@@ -62,4 +68,26 @@ export function PluginInterfaceWrappers(props: { children: JSX.Element }) {
     result = () => <Wrapper>{inner()}</Wrapper>;
   }
   return result();
+}
+
+/**
+ * Renders a plugin-owned content page based on the :pageId route param.
+ * Falls back to redirecting to / if no plugin claims the page.
+ */
+export function PluginContentPage() {
+  const params = useParams<{ pageId: string }>();
+  const plugins = usePlugins();
+
+  const page = () => plugins?.contentPages.find((p) => p.id === params.pageId);
+
+  return (
+    <Switch fallback={<Navigate href="/" />}>
+      <Match when={page()}>
+        {(p) => {
+          const Page = p().component;
+          return <Page />;
+        }}
+      </Match>
+    </Switch>
+  );
 }

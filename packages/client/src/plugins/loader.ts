@@ -51,6 +51,9 @@ function createPluginAPI(
     registerSidebarAction(action) {
       setState("sidebarActions", (prev: unknown[]) => [...prev, action]);
     },
+    registerContentPage(page) {
+      setState("contentPages", (prev: unknown[]) => [...prev, page]);
+    },
     storage: createPluginStorage(pluginName),
     getClient,
   };

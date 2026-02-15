@@ -1,4 +1,5 @@
 export type {
+  ContentPage,
   InterfaceWrapper,
   SidebarAction,
   PluginAPI,
@@ -8,6 +9,7 @@ export type {
 
 export {
   PluginProvider,
+  PluginContentPage,
   usePlugins,
   PluginInterfaceWrappers,
   type PluginState,

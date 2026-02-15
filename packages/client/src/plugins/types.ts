@@ -26,6 +26,16 @@ export interface PluginStorage {
 }
 
 /**
+ * A plugin-owned page rendered at /ext/:pageId.
+ */
+export interface ContentPage {
+  /** Unique route id (used in /ext/:pageId) */
+  id: string;
+  /** Component rendered in the main content area */
+  component: Component;
+}
+
+/**
  * The API object passed to plugin.setup().
  */
 export interface PluginAPI {
@@ -34,6 +44,9 @@ export interface PluginAPI {
 
   /** Register a sidebar action button */
   registerSidebarAction(action: SidebarAction): void;
+
+  /** Register a plugin-owned page at /ext/:pageId */
+  registerContentPage(page: ContentPage): void;
 
   /** Per-plugin persistent storage */
   storage: PluginStorage;
