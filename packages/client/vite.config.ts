@@ -1,8 +1,8 @@
 import { lingui as linguiSolidPlugin } from "@lingui-solid/vite-plugin";
 import devtools from "@solid-devtools/transform";
-import { readdirSync } from "node:fs";
-import { resolve } from "node:path";
-import { defineConfig } from "vite";
+import { readdirSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { resolve, join } from "node:path";
+import { defineConfig, type Plugin } from "vite";
 import babelMacrosPlugin from "vite-plugin-babel-macros";
 import Inspect from "vite-plugin-inspect";
 import { VitePWA } from "vite-plugin-pwa";
@@ -11,11 +11,42 @@ import solidSvg from "vite-plugin-solid-svg";
 
 import codegenPlugin from "./codegen.plugin";
 
+/**
+ * Auto-generates public/plugins/plugins.json from *.js files in the folder.
+ * Just drop a .js file in public/plugins/ — no manual manifest needed.
+ */
+function pluginsManifest(): Plugin {
+  const pluginsDir = resolve(__dirname, "public/plugins");
+
+  function generate() {
+    if (!existsSync(pluginsDir)) mkdirSync(pluginsDir, { recursive: true });
+    const files = readdirSync(pluginsDir).filter(
+      (f) => f.endsWith(".js") && f !== "plugins.json",
+    );
+    writeFileSync(join(pluginsDir, "plugins.json"), JSON.stringify(files));
+  }
+
+  return {
+    name: "plugins-manifest",
+    buildStart: generate,
+    configureServer(server) {
+      // Regenerate on file changes in public/plugins/
+      server.watcher.on("all", (_event, path) => {
+        if (path.startsWith(pluginsDir) && path.endsWith(".js")) {
+          generate();
+        }
+      });
+      generate();
+    },
+  };
+}
+
 const base = process.env.BASE_PATH ?? "/";
 
 export default defineConfig({
   base,
   plugins: [
+    pluginsManifest(),
     Inspect(),
     devtools(),
     codegenPlugin(),

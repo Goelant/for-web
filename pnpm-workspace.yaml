@@ -1,5 +1,6 @@
 packages:
   - packages/client
+  - packages/multi-instance
   - packages/stoat.js
   - packages/solid-livekit-components
   - packages/solid-dnd-directive
